@@ -7,7 +7,7 @@ const TodoList = () => {
 
   const todoItems = todos ? todos.map(_ => (
     <div key={_.id} className="todobox">
-      <input type="checkbox" onClick={() => actions.updateTodo(_.id, { isCompleted: !(_.isCompleted) })} />
+      <input type="checkbox" checked={Boolean(_.isCompleted)} onClick={() => actions.updateTodo(_.id, { isCompleted: !(_.isCompleted) })} />
       {_.text}
     </div>
   )) : null
@@ -19,12 +19,17 @@ const TodoList = () => {
     setCurrentText(evt.target.value)
   }
 
+  const handleAdd = (evt: any) => {
+    evt.preventDefault()
+    actions.createTodo(currentText)
+  }
+
   return (
     <div>
       <form>
         <label>What to do:</label><br />
         <input type="text" name="todoText" value={currentText} onChange={handleTextChange}/><br /><br />
-        <button onClick={() => actions.createTodo(currentText)}>Add</button>
+        <button onClick={handleAdd}>Add</button>
       </form>
       {todoItems}
     </div>
