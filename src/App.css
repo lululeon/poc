@@ -3,3 +3,9 @@
   border: 1px solid #ccc;
   margin: 0.25em;
 }
+
+.button {
+  padding: 0.25em 0.5em;
+  border: 1px solid #eee;
+  margin-left: 1em;
+}

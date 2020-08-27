@@ -10,7 +10,9 @@ export type TodoType = {
   text: string
   isCompleted: boolean
   createdAt: string
-  updatedAt?: string
+  updatedAt: string
+  // deleted: boolean // rxdb / pouch seems to want full control of this attr. Can't have it as a top-lvl attr.
+  deletedAt?: string  // will need for scheduled hard-delete sweeps. Made optional bcos '' is not a valid date format
   // userId: string
 }
 
@@ -26,7 +28,7 @@ export type TodoDocument = RxDocument<TodoType, TodoMethods>
 export const todoSchema: RxJsonSchema<TodoType> = {
   title: 'todo schema',
   description: 'todo schema',
-  version: 0,
+  version: 1,
   type: 'object',
   properties: {
     id: {
@@ -48,12 +50,21 @@ export const todoSchema: RxJsonSchema<TodoType> = {
       type: 'string',
       format: 'date-time'
     },
+    // looks like rxdb directly controls this attribute, so can't also define it here. But, will prolly
+    // still need it pgsql-side.
+    // deleted: {
+    //   type: 'boolean'
+    // },
+    deletedAt: {
+      type: 'string',
+      format: 'date-time'
+    },
     // userId: {
     //   type: 'string'
     // },
   },
   // required: ['text', 'isCompleted', 'userId', 'createdAt'],
-  required: ['id', 'text', 'isCompleted', 'createdAt'],
+  required: ['id', 'text', 'isCompleted', 'createdAt', 'updatedAt'],
   indexes: ['createdAt']
   // additionalProperties: true
 }

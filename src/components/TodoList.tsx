@@ -7,8 +7,9 @@ const TodoList = () => {
 
   const todoItems = todos ? todos.map(_ => (
     <div key={_.id} className="todobox">
-      <input type="checkbox" checked={Boolean(_.isCompleted)} onClick={() => actions.updateTodo(_.id, { isCompleted: !(_.isCompleted) })} />
+      <input type="checkbox" checked={Boolean(_.isCompleted)} onChange={() => actions.updateTodo(_.id, { isCompleted: !(_.isCompleted) })} />
       {_.text}
+      <span role="img" aria-label="delete" className="button" onClick={() => actions.deleteTodo(_.id)}>✖️</span>
     </div>
   )) : null
 

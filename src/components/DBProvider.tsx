@@ -1,5 +1,5 @@
 import React, { useEffect, useState, ReactNode} from 'react'
-import { uuid } from 'uuidv4'
+import { v4 as uuidv4 } from 'uuid'
 import { createDb, AppDatabase } from './Database'
 import { TodoType } from './Schema'
 import helper from './helper'
@@ -8,8 +8,10 @@ const todoPatch = {
   id: '',
   text: '',
   isCompleted: false,
-  createdAt: '',
-  updatedAt: '',
+  createdAt: null,
+  updatedAt: null,
+  // deleted: false, // managed by rxdb so causes clash. leave it out client-side
+  // deletedAt: '',
   // userId: '',
 }
 
@@ -70,8 +72,10 @@ export const DBProvider = ({ children }: IDBProviderProps) => {
 
   const deleteTodo = async (todoId: string) => {
     try {
+      const ts = (new Date()).toISOString()
       const theTodo = await db?.todos.findOne().where('id').eq(todoId).exec()
-      theTodo?.remove()
+      await theTodo?.update({ $set: {deletedAt: ts} })
+      await theTodo?.remove()
     } catch (error) {
       console.error('rxdb persistence failed.', error)
     }
@@ -80,8 +84,7 @@ export const DBProvider = ({ children }: IDBProviderProps) => {
 
   const createTodo = async (todoText: string) => {
     const ts = (new Date()).toISOString()
-    const newTodo = { ...todoPatch, id: uuid(), text: todoText, createdAt: ts, updatedAt: ts }
-
+    const newTodo = { ...todoPatch, id: uuidv4(), text: todoText, createdAt: ts, updatedAt: ts }
     try {
       await db?.todos.insert(newTodo)
     } catch (error) {
@@ -92,15 +95,16 @@ export const DBProvider = ({ children }: IDBProviderProps) => {
   }
 
   const updateTodo = async (todoId:string, todoPatch: any) => {
+    const ts = (new Date()).toISOString()
+    const {id, createdAt, ...rest} = todoPatch
+    const validPatch = { ...rest, updatedAt: ts }
     try {
-      const {id, createdAt, ...rest} = todoPatch
-      const validPatch = { ...rest, updatedAt: (new Date()).toISOString() }
       const theTodo = await db?.todos.findOne().where('id').eq(todoId).exec()
       theTodo?.update({ $set: validPatch })
     } catch (error) {
       console.error('rxdb persistence failed.', error)
     }
-    setTodos(helper.update(todos, todoId, todoPatch))
+    setTodos(helper.update(todos, todoId, validPatch))
   }
 
   return (

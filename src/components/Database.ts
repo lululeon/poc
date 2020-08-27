@@ -56,7 +56,21 @@ export const createDb = async ():Promise<AppDatabase> => {
     name: 'todos',
     schema: todoSchema,
     methods: todoMethods,
-    statics: todoCollectionMethods
+    statics: todoCollectionMethods,
+
+    // from docs: A migrationStrategy is a function which gets the old document-data as a parameter and 
+    // returns the new, transformed document-data. If the strategy returns null, the document will be 
+    // removed instead of migrated.
+    migrationStrategies: {
+      // 1 means, this transforms data from version 0 to version 1
+      1: function(oldDoc: TodoDocument) {
+        oldDoc.updatedAt = oldDoc.updatedAt === '' ? oldDoc.createdAt : oldDoc.updatedAt
+        if(oldDoc.deleted) {
+          oldDoc.deletedAt = oldDoc.updatedAt
+        }
+        return oldDoc;
+      }
+    }
   });
 
   // 6. hooks. eg post-insert:
