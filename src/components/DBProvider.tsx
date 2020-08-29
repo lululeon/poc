@@ -1,8 +1,9 @@
 import React, { useEffect, useState, ReactNode} from 'react'
 import { v4 as uuidv4 } from 'uuid'
-import { createDb, AppDatabase } from './Database'
-import { TodoType } from './Schema'
-import helper from './helper'
+import { createDb, AppDatabase } from '../persistence/Database'
+import { TodoDocument } from '../persistence/Schema'
+import { GraphQLReplicator } from '../persistence/GraphQLReplicator'
+// import helper from '../persistence/helper'
 
 const todoPatch = {
   id: '',
@@ -22,7 +23,8 @@ interface IDBActions {
 }
 
 export const DBContext = React.createContext({
-  todos: [] as TodoType[],
+  todos: [] as TodoDocument[],
+  // replicator: undefined as undefined | GraphQLReplicator,
   actions: {} as IDBActions,
 })
 
@@ -33,7 +35,8 @@ interface IDBProviderProps {
 export const DBProvider = ({ children }: IDBProviderProps) => {
   const [ready, setReady] = useState(false)
   const [db, setDb] = useState<AppDatabase | undefined>(undefined)
-  const [todos, setTodos] = useState<TodoType[]>([])
+  // const [replicator, setReplicator] = useState<GraphQLReplicator | undefined>(undefined)
+  const [todos, setTodos] = useState<TodoDocument[]>([])
 
   // 1. [] => hook has no depencies => not watching anything => can fire once only on mount.
   // 2. you mustn't make the useEffect itself async. But you CAN have it define an async and immediately call it.
@@ -41,6 +44,11 @@ export const DBProvider = ({ children }: IDBProviderProps) => {
     async function initIdb() {
       if (!ready) {
         const theDb: AppDatabase = await createDb()
+
+        // FIXME: use useReducer for all these sets
+        const theReplicator = new GraphQLReplicator(theDb)
+        theReplicator.restart({idToken: 'noTokenYet', userId: '12345fake'})
+        // setReplicator(theReplicator)
         setDb(theDb)
         setReady(true)
       }
@@ -51,16 +59,15 @@ export const DBProvider = ({ children }: IDBProviderProps) => {
 
   useEffect(() => {
     async function initTodos() {
-      if (ready && db) {
+      if (db) {
         try {
-          await db.todos.find().sort('createdAt').$.subscribe((initialTodos => {
-            if(!initialTodos) return
-            
-            console.log('*** fetched todos!', initialTodos)
-  
+          await db?.todos.find().sort('createdAt').$.subscribe((initialTodos => {
             // make sure we actually fetched sthg else will write undefined to our local state!
+            if(!initialTodos) return
+
             const pojoTodos = initialTodos.map(_ => _.toJSON())
-            setTodos(pojoTodos)
+            console.log('*** subscription signal fired! fetched todos!', pojoTodos)
+            setTodos(initialTodos)
           }))
         } catch (error) {
           console.log('could not fetch initial todos from browser store!', error)
@@ -68,18 +75,30 @@ export const DBProvider = ({ children }: IDBProviderProps) => {
       }
     }
     initTodos()
-  }, [ready, db])
+  }, [db])
+
+  // const deleteTodo = async (todoId: string) => {
+  //   try {
+  //     const ts = (new Date()).toISOString()
+  //     const theTodo = await db?.todos.findOne().where('id').eq(todoId).exec()
+  //     await theTodo?.update({ $set: {deletedAt: ts} })
+  //     console.log('*** DELETING!!!', theTodo?.toJSON())
+  //     const deletedItem = await theTodo?.remove()
+
+  //   } catch (error) {
+  //     console.error('rxdb persistence failed.', error)
+  //   }
+  //   setTodos(helper.remove(todos, todoId))
+  // }
 
   const deleteTodo = async (todoId: string) => {
     try {
-      const ts = (new Date()).toISOString()
       const theTodo = await db?.todos.findOne().where('id').eq(todoId).exec()
-      await theTodo?.update({ $set: {deletedAt: ts} })
       await theTodo?.remove()
     } catch (error) {
       console.error('rxdb persistence failed.', error)
     }
-    setTodos(helper.remove(todos, todoId))
+    // setTodos(helper.remove(todos, todoId))
   }
 
   const createTodo = async (todoText: string) => {
@@ -91,7 +110,7 @@ export const DBProvider = ({ children }: IDBProviderProps) => {
       console.error('rxdb persistence failed.', error)
     }
 
-    setTodos(helper.create(todos, newTodo))
+    // setTodos(helper.create(todos, newTodo))
   }
 
   const updateTodo = async (todoId:string, todoPatch: any) => {
@@ -104,13 +123,14 @@ export const DBProvider = ({ children }: IDBProviderProps) => {
     } catch (error) {
       console.error('rxdb persistence failed.', error)
     }
-    setTodos(helper.update(todos, todoId, validPatch))
+    // setTodos(helper.update(todos, todoId, validPatch))
   }
 
   return (
     <DBContext.Provider
       value={{
         todos,
+        // replicator,
         actions: {
           createTodo,
           deleteTodo,

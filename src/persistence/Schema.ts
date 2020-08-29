@@ -1,6 +1,7 @@
 import {
   RxJsonSchema,
   RxDocument,
+  RxCollection,
 } from 'rxdb'
 
 
@@ -11,8 +12,8 @@ export type TodoType = {
   isCompleted: boolean
   createdAt: string
   updatedAt: string
-  // deleted: boolean // rxdb / pouch seems to want full control of this attr. Can't have it as a top-lvl attr.
-  deletedAt?: string  // will need for scheduled hard-delete sweeps. Made optional bcos '' is not a valid date format
+  // deleted?: boolean // rxdb / pouch seems to want full control of this attr. Can't have it as a top-lvl attr.
+  deletedAt?: string | null  // will need for scheduled hard-delete sweeps. Made optional bcos '' is not a valid date format
   // userId: string
 }
 
@@ -68,3 +69,12 @@ export const todoSchema: RxJsonSchema<TodoType> = {
   indexes: ['createdAt']
   // additionalProperties: true
 }
+
+
+// we declare static ORM-methods for the collection
+export type TodoCollectionMethods = {
+  countAllDocuments: () => Promise<number>
+}
+
+// and then merge all our types to define the collection
+export type TodoCollection = RxCollection<TodoType, TodoMethods, TodoCollectionMethods>

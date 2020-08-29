@@ -1,35 +1,25 @@
 import {
   createRxDatabase,
   RxDatabase,
-  RxCollection,
   PouchDB,
 } from 'rxdb'
 import idb from 'pouchdb-adapter-idb'
-import { todoSchema, TodoType, TodoMethods, TodoDocument } from './Schema'
+import { todoSchema, TodoType, TodoMethods, TodoDocument, TodoCollection, TodoCollectionMethods } from './Schema'
 
+// load plugins
 PouchDB.plugin(idb)
 
-
-// we declare static ORM-methods for the collection
-type TodoCollectionMethods = {
-  countAllDocuments: () => Promise<number>
-}
-
-// and then merge all our types
-type TodoCollection = RxCollection<TodoType, TodoMethods, TodoCollectionMethods>
-
 // the helper type containing all our collections
-type MyDatabaseCollections = {
+export type AppDatabaseCollections = {
   todos: TodoCollection
 }
 
 // now define the database
-type MyDatabase = RxDatabase<MyDatabaseCollections>
-export type AppDatabase = MyDatabase // exported alias
+export type AppDatabase = RxDatabase<AppDatabaseCollections>
 
 export const createDb = async ():Promise<AppDatabase> => {
   // 1. create the database
-  const myDatabase: MyDatabase = await createRxDatabase<MyDatabaseCollections>({
+  const appDb: AppDatabase = await createRxDatabase<AppDatabaseCollections>({
     name: 'mydb',
     adapter: 'idb'
   })
@@ -52,7 +42,7 @@ export const createDb = async ():Promise<AppDatabase> => {
   }
 
   // 5. create the collection
-  await myDatabase.collection({
+  await appDb.collection({
     name: 'todos',
     schema: todoSchema,
     methods: todoMethods,
@@ -74,7 +64,7 @@ export const createDb = async ():Promise<AppDatabase> => {
   });
 
   // 6. hooks. eg post-insert:
-  myDatabase.todos.postInsert(
+  appDb.todos.postInsert(
     function myPostInsertHook(
         this: TodoCollection, // own collection is bound to the scope
         docData: TodoType, // documents data
@@ -86,5 +76,5 @@ export const createDb = async ():Promise<AppDatabase> => {
   )
 
   // 7. return the database
-  return myDatabase
+  return appDb
 }
