@@ -1,10 +1,11 @@
 import React, {useContext, useState } from 'react'
-import { DBContext } from './DBProvider'
+import { DBContext } from './OldProvider'
 
 const TodoList = () => {
   const [currentText, setCurrentText] = useState('')
   const { actions, todos } = useContext(DBContext)
 
+  /* tslint:disable */
   const todoItems = todos ? todos.map(_ => (
     <div key={_.id} className="todobox">
       <input type="checkbox" checked={Boolean(_.isCompleted)} onChange={() => actions.updateTodo(_.id, { isCompleted: !(_.isCompleted) })} />
