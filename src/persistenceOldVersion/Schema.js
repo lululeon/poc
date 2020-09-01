@@ -23,9 +23,9 @@ export const todoSchema  = {
           'type': 'string',
           'format': 'date-time'
       },
-      // 'userId': {
-      //     'type': 'string'
-      // },
+      'userId': {
+          'type': 'string'
+      },
   },
   'required': ['text', 'isCompleted', 'userId', 'createdAt'],
   additionalProperties: true

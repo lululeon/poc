@@ -8,7 +8,7 @@ RxDB.plugin(RxDBReplicationGraphQL);
 const syncURL = process.env.REACT_APP_HASURA_ENDPOINT
 const batchSize = process.env.REACT_APP_SYNC_BATCH_SIZE ? parseInt(process.env.REACT_APP_SYNC_BATCH_SIZE, 10) : 5
 
-const pullQueryBuilder = (userId) => {
+const pullQueryBuilder = () => {
     return (doc) => {
         if (!doc) {
             doc = {
@@ -34,6 +34,7 @@ const pullQueryBuilder = (userId) => {
                 text
                 isCompleted
                 deleted
+                userId
                 createdAt
                 updatedAt
             }
@@ -83,18 +84,18 @@ export class GraphQLReplicator {
         this.replicationState = await this.setupGraphQLReplication(auth)
         this.subscriptionClient = this.setupGraphQLSubscription(auth, this.replicationState)
     }
-    async setupGraphQLReplication(auth) {
+    async setupGraphQLReplication(token) {
         const replicationState = this.db.todos.syncGraphQL({
            url: syncURL,
            headers: {
-               'Authorization': `Bearer ${auth.idToken}`
+               'Authorization': `Bearer ${token}`
            },
            push: {
                batchSize,
                queryBuilder: pushQueryBuilder
            },
            pull: {
-               queryBuilder: pullQueryBuilder(auth.userId)
+               queryBuilder: pullQueryBuilder()
            },
            live: true,
            /**
@@ -113,15 +114,15 @@ export class GraphQLReplicator {
        return replicationState;
     }
    
-    setupGraphQLSubscription(auth, replicationState) {
+    setupGraphQLSubscription(token, replicationState) {
         // Change this url to point to your hasura graphql url
-        const endpointURL = syncURL.replace(/^https?/gi, 'ws');
+        const endpointURL = syncURL.replace(/^https?/gi, 'wss');
         const wsClient = new SubscriptionClient(endpointURL, {
             reconnect: true,
             connectionParams: {
-                // headers: {
-                //     'Authorization': `Bearer ${auth.idToken}`
-                // }
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
             },
             timeout: 1000 * 60,
             onConnect: () => {
@@ -136,12 +137,12 @@ export class GraphQLReplicator {
         });
     
         const query = `subscription onTodoChanged {
-            todos {
-                id
-                deleted
-                isCompleted
-                text
-            }       
+          todos {
+            id
+            deleted
+            isCompleted
+            text
+          }       
         }`;
     
         const ret = wsClient.request({ query });
