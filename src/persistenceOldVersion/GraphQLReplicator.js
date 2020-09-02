@@ -10,7 +10,7 @@ const batchSize = process.env.REACT_APP_SYNC_BATCH_SIZE ? parseInt(process.env.R
 
 const pullQueryBuilder = (userId) => {
   return (doc) => {
-    console.log('< < < PULL!!!', userId, doc)
+    // console.log('< < < PULL!!!', userId, doc)
         if (!doc) {
             doc = {
                 id: '',
@@ -50,11 +50,7 @@ const pullQueryBuilder = (userId) => {
 }
 
 const pushQueryBuilder = doc => {
-  console.log('>>> PUSH!!!', doc)
-  // return {
-  //   query: '',
-  //   variables: {}
-  // }
+  // console.log('>>> PUSH!!!', doc)
 
     const query = `
         mutation InsertTodo($todo: [todos_insert_input!]!) {
@@ -86,7 +82,7 @@ export class GraphQLReplicator {
         this.subscriptionClient = null      
     }
     async restart({userId, authToken}) {
-      console.log('*** repl restart with userId:', userId, 'and token:', authToken)
+      // console.log('*** repl restart with userId:', userId, 'and token:', authToken)
 
         if(this.replicationState) {
             this.replicationState.cancel()
@@ -94,7 +90,7 @@ export class GraphQLReplicator {
         if(this.subscriptionClient) {
             this.subscriptionClient.close()
         }
-        this.replicationState = await this.setupGraphQLReplication(authToken)
+        this.replicationState = await this.setupGraphQLReplication({ userId, authToken })
         this.subscriptionClient = this.setupGraphQLSubscription({ userId, authToken }, this.replicationState)
     }
     async setupGraphQLReplication({userId, authToken}) {
@@ -116,14 +112,14 @@ export class GraphQLReplicator {
             * when something has changed,
             * we can set the liveIntervall to a high value
             */
-           liveInterval: 1000 * 60 * 1, // 10 minutes
+           liveInterval: 1000 * 60 * 10, // 10 minutes
            deletedFlag: 'deleted'
        })
    
-      //  replicationState.error$.subscribe(err => {
-      //      console.error('replication error:')
-      //      console.dir(err)
-      //  })
+       replicationState.error$.subscribe(err => {
+           console.error('replication error:')
+           console.dir(err)
+       })
        return replicationState
     }
    
@@ -131,8 +127,8 @@ export class GraphQLReplicator {
         // Change this url to point to your hasura graphql url
         // note!! if in prod and using https, this has to be 'wss' protocol not 'ws'!!
         const endpointURL = syncURL.replace(/^https?/gi, 'wss')
-        console.log('*** setup repl with websock endpoint:', endpointURL)
-        console.log('*** setup repl with token:', authToken)
+        // console.log('*** setup repl with websock endpoint:', endpointURL)
+        // console.log('*** setup repl with token:', authToken)
 
         const wsClient = new SubscriptionClient(endpointURL, {
             reconnect: true,
