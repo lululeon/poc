@@ -46,41 +46,41 @@ interface IDBActions {
 
 export const DBContext = React.createContext({
   todos: [] as TodoDocument[],
-  // replicator: undefined as undefined | GraphQLReplicator,
+  replicating: false,
   actions: {} as IDBActions,
 })
 
 
 interface IDBProviderProps {
-  authedUser: any
+  userId: string
   authToken: string
   children: ReactNode
 }
 
-export const DBProvider = ({ children, authedUser, authToken }: IDBProviderProps) => {
-  const [ready, setReady] = useState(false)
+export const DBProvider = ({ children, userId, authToken }: IDBProviderProps) => {
   const [db, setDb] = useState<RxDatabase | undefined>(undefined)
-  // const [replicator, setReplicator] = useState<GraphQLReplicator | undefined>(undefined)
+  const [replicating, setReplicating] = useState<boolean>(false)
   const [todos, setTodos] = useState<TodoDocument[]>([])
 
   // 1. [] => hook has no depencies => not watching anything => can fire once only on mount.
   // 2. you mustn't make the useEffect itself async. But you CAN have it define an async and immediately call it.
   useEffect(() => {
     async function initIdb() {
-      if (!ready) {
+      if (!db) {
         const theDb: RxDatabase = await createDb()
-
-        // FIXME: use useReducer for all these sets
-        const theReplicator = new GraphQLReplicator(theDb)
-        theReplicator.restart(authToken)
-        // setReplicator(theReplicator)
         setDb(theDb)
-        setReady(true)
+      } else {
+        const theReplicator = new GraphQLReplicator(db)
+        if (userId && authToken) {
+          theReplicator.restart({ userId, authToken })
+          setReplicating(true)
+        }
       }
     }
+
     console.log('initialising db...')
     initIdb()
-  }, [ready, authToken])
+  }, [db, authToken, userId])
 
   useEffect(() => {
     async function initTodos() {
@@ -90,8 +90,9 @@ export const DBProvider = ({ children, authedUser, authToken }: IDBProviderProps
             // make sure we actually fetched sthg else will write undefined to our local state!
             if(!initialTodos) return
 
-            const pojoTodos = initialTodos.map(_ => _.toJSON())
-            console.log('*** subscription signal fired! fetched todos!', pojoTodos)
+            // const pojoTodos = initialTodos.map(_ => _.toJSON())
+            // console.log('*** local rxdb change: fetched todos!', pojoTodos)
+
             setTodos(initialTodos)
           }))
         } catch (error) {
@@ -114,13 +115,12 @@ export const DBProvider = ({ children, authedUser, authToken }: IDBProviderProps
 
   const createTodo = async (todoText: string) => {
     const ts = (new Date()).toISOString()
-    const newTodo: TodoType = { id: uuidv4(), text: todoText, isCompleted: false, createdAt: ts, updatedAt: ts, userId: '12345fake' }
+    const newTodo: TodoType = { id: uuidv4(), text: todoText, isCompleted: false, createdAt: ts, updatedAt: ts, userId, }
     try {
       await db?.todos.insert(newTodo)
     } catch (error) {
       console.error('rxdb persistence failed.', error)
     }
-
     // setTodos(helper.create(todos, newTodo))
   }
 
@@ -141,7 +141,7 @@ export const DBProvider = ({ children, authedUser, authToken }: IDBProviderProps
     <DBContext.Provider
       value={{
         todos,
-        // replicator,
+        replicating,
         actions: {
           createTodo,
           deleteTodo,

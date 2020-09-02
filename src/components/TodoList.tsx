@@ -3,7 +3,7 @@ import { DBContext } from './OldProvider'
 
 const TodoList = () => {
   const [currentText, setCurrentText] = useState('')
-  const { actions, todos } = useContext(DBContext)
+  const { actions, todos, replicating } = useContext(DBContext)
 
   /* tslint:disable */
   const todoItems = todos ? todos.map(_ => (
@@ -33,6 +33,7 @@ const TodoList = () => {
         <input type="text" name="todoText" value={currentText} onChange={handleTextChange}/><br /><br />
         <button onClick={handleAdd}>Add</button>
       </form>
+      {!replicating && <p>WARNING!! Replication is not working at the moment!</p>}
       {todoItems}
     </div>
     

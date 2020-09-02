@@ -2,26 +2,25 @@ import React from 'react'
 import './App.css';
 // import { DBProvider } from './components/DBProvider'
 import AppLayout from './components/AppLayout'
-import { Auth0Provider } from '@auth0/auth0-react'
+
+// no types yet for this lib:
+// import {
+//   FeatherClient,
+//   FeatherProvider,
+// } from 'feather-client-react'
+const FeatherClientReact = require('feather-client-react')
+const FeatherClient = FeatherClientReact.FeatherClient
+const FeatherProvider = FeatherClientReact.FeatherProvider
+
 
 function App() {
-  const authDomain =  process.env.REACT_APP_AUTH0_DOMAIN || ''
-  const authClientId = process.env.REACT_APP_AUTH0_CLIENT_ID || ''
-  const authRedirectUri = process.env.REACT_APP_AUTH0_REDIR_URL || ''
-
-  // scope - not needed. these are domain specific permission scopes, like read:emails , etc
-
-  console.log('*** ENV :', authDomain, authClientId, authRedirectUri)
-
+  const authApiKey = process.env.REACT_APP_FEATHER_API_KEY
+  const feather = FeatherClient(authApiKey)
   return (
     <div className="App">
-      <Auth0Provider
-        domain={authDomain}
-        clientId={authClientId}
-        redirectUri={authRedirectUri}
-      >
+      <FeatherProvider client={feather}>
         <AppLayout />
-      </Auth0Provider>
+      </FeatherProvider>
     </div>
   )
 }
