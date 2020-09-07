@@ -57,12 +57,11 @@ export const DBContext = React.createContext({
 
 
 interface IDBProviderProps {
-  userId: string
   authToken: string
   children: ReactNode
 }
 
-export const DBProvider = ({ children, userId, authToken }: IDBProviderProps) => {
+export const DBProvider = ({ children, authToken }: IDBProviderProps) => {
   const [db, setDb] = useState<RxDatabase | undefined>(undefined)
   const [replicating, setReplicating] = useState<boolean>(false)
   const [todos, setTodos] = useState<TodoDocument[]>([])
@@ -76,8 +75,8 @@ export const DBProvider = ({ children, userId, authToken }: IDBProviderProps) =>
         setDb(theDb)
       } else {
         const theReplicator = new GraphQLReplicator(db)
-        if (userId && authToken) {
-          theReplicator.restart({ userId, authToken })
+        if (authToken) {
+          theReplicator.restart(authToken)
           setReplicating(true)
         }
       }
@@ -85,7 +84,7 @@ export const DBProvider = ({ children, userId, authToken }: IDBProviderProps) =>
 
     console.log('initialising db...')
     initIdb()
-  }, [db, authToken, userId])
+  }, [db, authToken])
 
   useEffect(() => {
     async function initTodos() {
@@ -120,7 +119,7 @@ export const DBProvider = ({ children, userId, authToken }: IDBProviderProps) =>
 
   const createTodo = async (todoText: string) => {
     const ts = (new Date()).toISOString()
-    const newTodo: TodoType = { id: uuidv4(), text: todoText, isCompleted: false, createdAt: ts, updatedAt: ts, userId, }
+    const newTodo: TodoType = { id: uuidv4(), text: todoText, isCompleted: false, createdAt: ts, updatedAt: ts, userId: '', }
     try {
       await db?.todos.insert(newTodo)
     } catch (error) {

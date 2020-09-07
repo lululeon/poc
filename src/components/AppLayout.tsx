@@ -48,7 +48,7 @@ const AppLayout = () => {
         </div>
       </nav>
       <section className="main">
-        <DBProvider userId={currentUser.id} authToken={currentUser.tokens.idToken}>
+        <DBProvider authToken={currentUser.tokens.idToken}>
           <TodoList />
         </DBProvider>
       </section>

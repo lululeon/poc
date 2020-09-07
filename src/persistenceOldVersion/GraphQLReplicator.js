@@ -8,7 +8,7 @@ RxDB.plugin(RxDBReplicationGraphQL)
 const syncURL = process.env.REACT_APP_HASURA_ENDPOINT
 const batchSize = process.env.REACT_APP_SYNC_BATCH_SIZE ? parseInt(process.env.REACT_APP_SYNC_BATCH_SIZE, 10) : 5
 
-const pullQueryBuilder = (userId) => {
+const pullQueryBuilder = () => {
   return (doc) => {
     // console.log('< < < PULL!!!', userId, doc)
         if (!doc) {
@@ -26,8 +26,7 @@ const pullQueryBuilder = (userId) => {
                             updatedAt: {_eq: "${doc.updatedAt}"},
                             id: {_gt: "${doc.id}"}
                         }
-                    ],
-                    userId: {_eq: "${userId}"}
+                    ]
                 },
                 limit: ${batchSize},
                 order_by: [{updatedAt: asc}, {id: asc}]
@@ -84,7 +83,7 @@ export class GraphQLReplicator {
         this.replicationState = null
         this.subscriptionClient = null      
     }
-    async restart({userId, authToken}) {
+    async restart(authToken) {
       // console.log('*** repl restart with userId:', userId, 'and token:', authToken)
 
         if(this.replicationState) {
@@ -93,10 +92,10 @@ export class GraphQLReplicator {
         if(this.subscriptionClient) {
             this.subscriptionClient.close()
         }
-        this.replicationState = await this.setupGraphQLReplication({ userId, authToken })
+        this.replicationState = await this.setupGraphQLReplication(authToken)
         this.subscriptionClient = this.setupGraphQLSubscription(authToken, this.replicationState)
     }
-    async setupGraphQLReplication({userId, authToken}) {
+    async setupGraphQLReplication(authToken) {
         const replicationState = this.db.todos.syncGraphQL({
            url: syncURL,
            headers: {
@@ -107,7 +106,7 @@ export class GraphQLReplicator {
                queryBuilder: pushQueryBuilder
            },
            pull: {
-               queryBuilder: pullQueryBuilder(userId)
+               queryBuilder: pullQueryBuilder()
            },
            live: true,
            /**
