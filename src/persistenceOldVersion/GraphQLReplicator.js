@@ -50,7 +50,9 @@ const pullQueryBuilder = (userId) => {
 }
 
 const pushQueryBuilder = doc => {
-  // console.log('>>> PUSH!!!', doc)
+  console.log('*** >>> PUSH', doc)
+  const gqlDoc = { ...doc }
+  delete gqlDoc.userId
 
     const query = `
         mutation InsertTodo($todo: [todos_insert_input!]!) {
@@ -58,7 +60,7 @@ const pushQueryBuilder = doc => {
                 objects: $todo,
                 on_conflict: {
                     constraint: todos_pkey,
-                    update_columns: [text, isCompleted, deleted, updatedAt]
+                    update_columns: [text, isCompleted, deleted]
                 }){
                 returning {
                   id
@@ -67,8 +69,9 @@ const pushQueryBuilder = doc => {
        }
     `
     const variables = {
-        todo: doc
+        todo: gqlDoc
     }
+    console.log('*** variables:', variables)
     return {
         query,
         variables
@@ -91,7 +94,7 @@ export class GraphQLReplicator {
             this.subscriptionClient.close()
         }
         this.replicationState = await this.setupGraphQLReplication({ userId, authToken })
-        this.subscriptionClient = this.setupGraphQLSubscription({ userId, authToken }, this.replicationState)
+        this.subscriptionClient = this.setupGraphQLSubscription(authToken, this.replicationState)
     }
     async setupGraphQLReplication({userId, authToken}) {
         const replicationState = this.db.todos.syncGraphQL({
@@ -128,7 +131,7 @@ export class GraphQLReplicator {
         // note!! if in prod and using https, this has to be 'wss' protocol not 'ws'!!
         const endpointURL = syncURL.replace(/^https?/gi, 'wss')
         // console.log('*** setup repl with websock endpoint:', endpointURL)
-        // console.log('*** setup repl with token:', authToken)
+        console.log('*** setup repl with token:', authToken)
 
         const wsClient = new SubscriptionClient(endpointURL, {
             reconnect: true,

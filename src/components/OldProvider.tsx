@@ -14,6 +14,11 @@ export type TodoType = {
   userId: string
 }
 
+export type TodoUpdatePatch = {
+  text: string
+  isCompleted: boolean
+}
+
 // we declare static ORM-methods for the collection
 export type TodoCollectionMethods = {
   countAllDocuments: () => Promise<number>
@@ -124,13 +129,26 @@ export const DBProvider = ({ children, userId, authToken }: IDBProviderProps) =>
     // setTodos(helper.create(todos, newTodo))
   }
 
-  const updateTodo = async (todoId:string, todoPatch: any) => {
-    const ts = (new Date()).toISOString()
-    const {id, createdAt, ...rest} = todoPatch
-    const validPatch = { ...rest, updatedAt: ts }
+  const updateTodo = async (todoId:string, todoPatch: TodoUpdatePatch) => {
+    // console.log('*** updateTodo:', todoId, todoPatch)
+
+    // db?.todos.findOne().where('id').eq(todoId).exec()
+    //   .then(theTodo => {
+    //   console.log('*** updating this doc:', theTodo.toJSON())
+    //   console.log('*** with patch:', { $set: todoPatch })
+    //   theTodo?.update({ $set: todoPatch })
+    //   // theTodo?.atomicUpdate({ $set: todoPatch })
+    //   })
+    //   .catch(error => console.error('rxdb persistence failed.', error))
+  
     try {
       const theTodo = await db?.todos.findOne().where('id').eq(todoId).exec()
-      theTodo?.update({ $set: validPatch })
+
+      if(!theTodo) throw new Error('item to be updated not found!')
+
+      // console.log('*** updating this doc:', theTodo.toJSON())
+      // console.log('*** with patch:', { $set: todoPatch })
+      theTodo.update({ $set: todoPatch })
     } catch (error) {
       console.error('rxdb persistence failed.', error)
     }

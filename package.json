@@ -20,7 +20,7 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.3",
-    "rxdb": "8.7.4",
+    "rxdb": "8.7.5",
     "rxjs": "^6.6.2",
     "subscriptions-transport-ws": "^0.9.18",
     "typescript": "^4.0.2",
