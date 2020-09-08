@@ -34,7 +34,7 @@ const AppLayout = () => {
     isLoading,
     error,
     user,
-    // isAuthenticated,
+    isAuthenticated,
     getAccessTokenSilently,
   } = useAuth0()
 
@@ -51,7 +51,7 @@ const AppLayout = () => {
         }
       }
     })()
-  }, [authToken, getAccessTokenSilently])
+  }, [isAuthenticated, authToken, getAccessTokenSilently])
 
   // const styles = {
   //   title: (provided: any) => ({
