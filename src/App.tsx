@@ -15,9 +15,6 @@ import { Auth0Provider } from '@auth0/auth0-react'
 
 
 function App() {
-  // const authApiKey = process.env.REACT_APP_FEATHER_API_KEY
-  // const feather = FeatherClient(authApiKey)
-  console.log('*** redir uri is ', process.env.REACT_APP_BASE_URL)
   return (
     <div className="App">
       <Auth0Provider 

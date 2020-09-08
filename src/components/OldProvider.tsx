@@ -82,7 +82,6 @@ export const DBProvider = ({ children, authToken }: IDBProviderProps) => {
       }
     }
 
-    console.log('initialising db...')
     initIdb()
   }, [db, authToken])
 
@@ -92,9 +91,6 @@ export const DBProvider = ({ children, authToken }: IDBProviderProps) => {
         db.todos.find().sort('createdAt').$.subscribe((initialTodos) => {
           // make sure we actually fetched sthg else will write undefined to our local state!
           if (!initialTodos) return
-
-          // const pojoTodos = initialTodos.map(_ => _.toJSON())
-          // console.log('*** local rxdb change: fetched todos!', pojoTodos)
 
           setTodos(initialTodos)
         })
@@ -110,7 +106,6 @@ export const DBProvider = ({ children, authToken }: IDBProviderProps) => {
     } catch (error) {
       console.error('rxdb persistence failed.', error)
     }
-    // setTodos(helper.remove(todos, todoId))
   }
 
   const createTodo = async (todoText: string) => {
@@ -121,35 +116,20 @@ export const DBProvider = ({ children, authToken }: IDBProviderProps) => {
     } catch (error) {
       console.error('rxdb persistence failed.', error)
     }
-    // setTodos(helper.create(todos, newTodo))
   }
 
-  const updateTodo = async (todoId:string, todoPatch: TodoUpdatePatch) => {
-    // console.log('*** updateTodo:', todoId, todoPatch)
-
-    // db?.todos.findOne().where('id').eq(todoId).exec()
-    //   .then(theTodo => {
-    //   console.log('*** updating this doc:', theTodo.toJSON())
-    //   console.log('*** with patch:', { $set: todoPatch })
-    //   theTodo?.update({ $set: todoPatch })
-    //   // theTodo?.atomicUpdate({ $set: todoPatch })
-    //   })
-    //   .catch(error => console.error('rxdb persistence failed.', error))
-  
+  const updateTodo = async (todoId:string, todoPatch: TodoUpdatePatch) => { 
     try {
       const theTodo = await db?.todos.findOne().where('id').eq(todoId).exec()
 
       if(!theTodo) throw new Error('item to be updated not found!')
 
-      // console.log('*** updating this doc:', theTodo.toJSON())
-      // console.log('*** with patch:', { $set: todoPatch })
       theTodo.atomicUpdate((oldDoc: TodoType) => { 
         return { ...oldDoc, ...todoPatch }
       })
     } catch (error) {
       console.error('rxdb persistence failed.', error)
     }
-    // setTodos(helper.update(todos, todoId, validPatch))
   }
 
   return (

@@ -10,7 +10,6 @@ const batchSize = process.env.REACT_APP_SYNC_BATCH_SIZE ? parseInt(process.env.R
 
 const pullQueryBuilder = () => {
   return (doc) => {
-    // console.log('< < < PULL!!!', userId, doc)
         if (!doc) {
             doc = {
                 id: '',
@@ -40,7 +39,6 @@ const pullQueryBuilder = () => {
                 updatedAt
             }
         }`
-        // console.log(query)
         return {
             query,
             variables: {}
@@ -49,7 +47,6 @@ const pullQueryBuilder = () => {
 }
 
 const pushQueryBuilder = doc => {
-  console.log('*** >>> PUSH', doc)
   const gqlDoc = { ...doc }
   delete gqlDoc.userId
 
@@ -70,7 +67,6 @@ const pushQueryBuilder = doc => {
     const variables = {
         todo: gqlDoc
     }
-    console.log('*** variables:', variables)
     return {
         query,
         variables
@@ -84,8 +80,6 @@ export class GraphQLReplicator {
         this.subscriptionClient = null      
     }
     async restart(authToken) {
-      // console.log('*** repl restart with userId:', userId, 'and token:', authToken)
-
         if(this.replicationState) {
             this.replicationState.cancel()
         }
@@ -129,8 +123,6 @@ export class GraphQLReplicator {
         // Change this url to point to your hasura graphql url
         // note!! if in prod and using https, this has to be 'wss' protocol not 'ws'!!
         const endpointURL = syncURL.replace(/^https?/gi, 'wss')
-        // console.log('*** setup repl with websock endpoint:', endpointURL)
-        console.log('*** setup repl with token:', authToken)
 
         const wsClient = new SubscriptionClient(endpointURL, {
             reconnect: true,
@@ -164,8 +156,6 @@ export class GraphQLReplicator {
     
         ret.subscribe({
             next(data) {
-                console.log('websocket subscription - subscribed!', data)
-                console.dir(data)
                 replicationState.run()
             },
             error(error) {

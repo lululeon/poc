@@ -45,7 +45,6 @@ const AppLayout = () => {
           const token = await getAccessTokenSilently({
             audience: process.env.REACT_APP_HASURA_ENDPOINT,
           })
-          console.log('*** silent token', token)
           setAuthToken(token)
         } catch (error) {
           console.error(error)
