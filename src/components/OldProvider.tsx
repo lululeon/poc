@@ -89,19 +89,15 @@ export const DBProvider = ({ children, authToken }: IDBProviderProps) => {
   useEffect(() => {
     async function initTodos() {
       if (db) {
-        try {
-          await db?.todos.find().sort('createdAt').$.subscribe((initialTodos => {
-            // make sure we actually fetched sthg else will write undefined to our local state!
-            if(!initialTodos) return
+        db.todos.find().sort('createdAt').$.subscribe((initialTodos) => {
+          // make sure we actually fetched sthg else will write undefined to our local state!
+          if (!initialTodos) return
 
-            // const pojoTodos = initialTodos.map(_ => _.toJSON())
-            // console.log('*** local rxdb change: fetched todos!', pojoTodos)
+          // const pojoTodos = initialTodos.map(_ => _.toJSON())
+          // console.log('*** local rxdb change: fetched todos!', pojoTodos)
 
-            setTodos(initialTodos)
-          }))
-        } catch (error) {
-          console.log('could not fetch initial todos from browser store!', error)
-        }
+          setTodos(initialTodos)
+        })
       }
     }
     initTodos()
@@ -147,7 +143,9 @@ export const DBProvider = ({ children, authToken }: IDBProviderProps) => {
 
       // console.log('*** updating this doc:', theTodo.toJSON())
       // console.log('*** with patch:', { $set: todoPatch })
-      theTodo.update({ $set: todoPatch })
+      theTodo.atomicUpdate((oldDoc: TodoType) => { 
+        return { ...oldDoc, ...todoPatch }
+      })
     } catch (error) {
       console.error('rxdb persistence failed.', error)
     }
