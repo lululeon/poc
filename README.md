@@ -1,7 +1,13 @@
 # very rough POC to see how rxdb works with graphql sync
 
+The actual rough working proofs are not on master: they are in these branches:
+
+- POC Using Feather for auth: [featherFinalWorkingImpl](https://github.com/lululeon/poc/tree/featherFinalWorkingImpl)
+- POC Using Auth0 for auth: [auth0Impl2Cleaned] https://github.com/lululeon/poc/tree/auth0Impl2Cleaned
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+
+---
 
 ## Available Scripts
 
